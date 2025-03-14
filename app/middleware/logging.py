@@ -4,6 +4,7 @@ from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 from pathlib import Path
+from starlette.background import BackgroundTask
 
 log_dir = Path("logs")
 log_dir.mkdir(exist_ok=True)
@@ -25,57 +26,53 @@ file_handler.setFormatter(JsonFormatter())
 
 logger.addHandler(file_handler)
 
+def log_request_response(req_body: bytes, res_body: bytes):
+    """Log request and response in the background"""
+    try:
+        request_data = json.loads(req_body) if req_body else None
+    except Exception:
+        request_data = req_body.decode() if req_body else None
+
+    try:
+        response_data = json.loads(res_body) if res_body else None
+    except Exception:
+        response_data = res_body.decode() if res_body else None
+
+    log_entry = {
+        "timestamp": logging.Formatter().formatTime(logging.LogRecord("", 0, "", 0, None, None, None)),
+        "level": "INFO",
+        "request": {
+            "body": request_data
+        },
+        "response": {
+            "body": response_data
+        }
+    }
+    
+    logger.info(log_entry)
+
 class RequestResponseLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        await self._log_request(request)
+        # Capture request body
+        req_body = await request.body()
         
+        # Get the original response
         response = await call_next(request)
         
-        await self._log_response(response)
+        # Capture response body
+        chunks = []
+        async for chunk in response.body_iterator:
+            chunks.append(chunk)
+        res_body = b''.join(chunks)
         
-        return response
-    
-    async def _log_request(self, request: Request):
-        body = await self._get_request_body(request)
+        # Create background task for logging
+        task = BackgroundTask(log_request_response, req_body, res_body)
         
-        log_entry = {
-            "timestamp": logging.Formatter().formatTime(logging.LogRecord("", 0, "", 0, None, None, None)),
-            "level": "INFO",
-            "type": "request",
-            "method": request.method,
-            "path": request.url.path,
-            "query_params": dict(request.query_params),
-            "headers": dict(request.headers),
-            "client": {"host": request.client.host if request.client else None},
-            "body": body
-        }
-        
-        logger.info(log_entry)
-    
-    async def _log_response(self, response: Response):
-        log_entry = {
-            "timestamp": logging.Formatter().formatTime(logging.LogRecord("", 0, "", 0, None, None, None)),
-            "level": "INFO",
-            "type": "response",
-            "status_code": response.status_code,
-            "headers": dict(response.headers)
-        }
-        
-        # We can't easily log the response body as it's already been streamed
-        # TODO: Implement proper response body logging
-        
-        logger.info(log_entry)
-    
-    async def _get_request_body(self, request: Request):
-        # Save the request body position
-        body_position = await request.body()
-        
-        # Reset the request body position for future middleware and endpoint
-        request._body = body_position
-        
-        try:
-            # Try to parse as JSON
-            return json.loads(body_position)
-        except Exception:
-            # If not JSON, return as string
-            return body_position.decode() if body_position else None 
+        # Return new response with captured body and background logging
+        return Response(
+            content=res_body,
+            status_code=response.status_code,
+            headers=dict(response.headers),
+            media_type=response.media_type,
+            background=task
+        )
