@@ -1,4 +1,4 @@
-# OpenAI API Mock Server
+# Llama.Ipsum
 
 A lightweight mock server that simulates the OpenAI API for development and testing purposes.
 
@@ -9,6 +9,7 @@ A lightweight mock server that simulates the OpenAI API for development and test
   - [ ] `/v1/completions`
   - [ ] `/v1/models`
 - [x] Supports API key authentication
+- [x] Logs requests and responses
 - [ ] Handles tool calls
 - [ ] Supports streaming responses
 
