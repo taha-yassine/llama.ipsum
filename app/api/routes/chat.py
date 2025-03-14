@@ -19,7 +19,7 @@ async def create_chat_completion(
 ):    
     # Create response using template
     response_dict = template_service.render_template(
-        "chat/chat.json.jinja"
+        "chat/completion.json.jinja"
     )
 
     # Convert to Pydantic model
