@@ -1,0 +1,7 @@
+.venv
+.direnv
+.envrc
+.vscode
+.pytest_cache
+__pycache__
+logs
