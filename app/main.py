@@ -17,7 +17,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.add_middleware(RequestResponseLoggingMiddleware)
+if settings.enable_logs:
+    app.add_middleware(RequestResponseLoggingMiddleware)
 
 app.include_router(chat.router)
 
