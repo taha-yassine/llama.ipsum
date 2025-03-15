@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import argparse
 import uvicorn
 
-from app.api.routes import chat
+from app.api.routes import chat, models
 from app.core.config import settings
 from app.middleware import RequestResponseLoggingMiddleware
 
@@ -21,6 +21,7 @@ if settings.enable_logs:
     app.add_middleware(RequestResponseLoggingMiddleware)
 
 app.include_router(chat.router)
+app.include_router(models.router)
 
 @app.get("/")
 async def root():

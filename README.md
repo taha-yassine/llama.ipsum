@@ -7,7 +7,7 @@ A lightweight mock server that simulates the OpenAI API for development and test
 - [x] Implements key OpenAI API endpoints:
   - [x] `/v1/chat/completions`
   - [ ] `/v1/completions`
-  - [ ] `/v1/models`
+  - [x] `/v1/models`
 - [x] Supports API key authentication
 - [x] Logs requests and responses
 - [ ] Handles tool calls
