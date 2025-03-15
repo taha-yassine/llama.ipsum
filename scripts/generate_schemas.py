@@ -25,7 +25,14 @@ def preprocess_spec(spec_content: str) -> str:
     """
     print("Preprocessing OpenAPI spec...")
     
-    spec_data = yaml.safe_load(spec_content)
+    # Use CLoader for better performance
+    try:
+        from yaml import CSafeLoader as SafeLoader
+    except ImportError:
+        from yaml import SafeLoader
+        print("Warning: Using Python-based YAML loader. Install libyaml for better performance.")
+    
+    spec_data = yaml.load(spec_content, Loader=SafeLoader)
     
     def remove_deprecated(node):
         """Recursively remove deprecated elements while preserving structure."""
@@ -71,7 +78,13 @@ def preprocess_spec(spec_content: str) -> str:
         print(f"Warning: Could not find schema path: {e}")
     
     # Convert back to YAML string
-    return yaml.dump(cleaned_data)
+    # Use CDumper for better performance if available
+    try:
+        from yaml import CSafeDumper as SafeDumper
+    except ImportError:
+        from yaml import SafeDumper
+    
+    return yaml.dump(cleaned_data, Dumper=SafeDumper)
 
 def generate_models(spec_content: str, spec_url: str, output_path: Path) -> None:
     """Generate Pydantic models from OpenAPI spec content."""
