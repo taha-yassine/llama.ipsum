@@ -37,12 +37,11 @@ async def create_chat_completion(
 
     # Params depending on the tokenization
     if request.max_completion_tokens:
-        tokens, offsets = await token_service.tokenize(content)
+        tokens = await token_service.tokenize(content)
     
     # Check max tokens
-    if request.max_completion_tokens < len(offsets):
-        trunc_index = offsets[request.max_completion_tokens]
-        content = content[:trunc_index]
+    if request.max_completion_tokens < len(tokens):
+        content = tokens[:request.max_completion_tokens]
         response_dict["choices"][0]["finish_reason"] = "length"
     
     response_dict["choices"][0]["message"]["content"] = content

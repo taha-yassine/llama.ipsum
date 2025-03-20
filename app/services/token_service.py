@@ -14,4 +14,11 @@ class TokenService:
 
         Returns a tuple containing the original text and the list of token offsets.
         """
-        return self._tokenizer.decode_with_offsets(self._tokenizer.encode(text))
+        text, offsets = self._tokenizer.decode_with_offsets(self._tokenizer.encode(text))
+        return self._offsets_to_list(text, offsets)
+    
+    def _offsets_to_list(self, text: str, offsets: list[int]) -> list[str]:
+        """
+        Convert a string and a list of token offsets to a list of strings.
+        """
+        return [text[offsets[i]:offsets[i+1]] for i in range(len(offsets)-1)]
