@@ -34,13 +34,16 @@ async def create_chat_completion(
             if sequence in content:
                 content = content[:content.index(sequence)]
                 response_dict["choices"][0]["finish_reason"] = "stop"
+
+    # Params depending on the tokenization
+    if request.max_completion_tokens:
+        tokens, offsets = await token_service.tokenize(content)
     
     # Check max tokens
-    if request.max_completion_tokens:
-        truncated_content = await token_service.truncate_text(content, request.max_completion_tokens)
-        if truncated_content != content:
-            response_dict["choices"][0]["finish_reason"] = "length"
-            content = truncated_content
+    if request.max_completion_tokens < len(offsets):
+        trunc_index = offsets[request.max_completion_tokens]
+        content = content[:trunc_index]
+        response_dict["choices"][0]["finish_reason"] = "length"
     
     response_dict["choices"][0]["message"]["content"] = content
     return CreateChatCompletionResponse(**response_dict)
