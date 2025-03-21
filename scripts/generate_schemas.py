@@ -113,6 +113,7 @@ def generate_models(spec_content: str, spec_url: str, output_path: Path) -> None
             reuse_model=True,
             strict_nullable=True,
             disable_timestamp=True,
+            use_subclass_enum=True, # Needed for JSON serialization, see https://github.com/pydantic/pydantic/issues/2278#issuecomment-764610380
             custom_file_header=custom_header,
         )
 
