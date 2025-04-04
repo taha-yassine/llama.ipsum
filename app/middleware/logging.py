@@ -2,7 +2,7 @@ import json
 import logging
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import Response
+from starlette.responses import Response, StreamingResponse
 from pathlib import Path
 from starlette.background import BackgroundTask
 
@@ -58,7 +58,13 @@ class RequestResponseLoggingMiddleware(BaseHTTPMiddleware):
         
         # Get the original response
         response = await call_next(request)
-        
+
+        # No logging if streaming
+        # TODO: support logging when streaming
+        content_type = response.headers.get('content-type')
+        if content_type and content_type.startswith('text/event-stream'):
+            return response
+
         # Capture response body
         chunks = []
         async for chunk in response.body_iterator:
