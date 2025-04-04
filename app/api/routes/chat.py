@@ -3,6 +3,7 @@ from sse_starlette.sse import EventSourceResponse
 import json
 import asyncio
 import time
+from typing import AsyncGenerator
 
 from app.models.schemas import (
     CreateChatCompletionRequest,
@@ -17,6 +18,7 @@ from app.models.schemas import (
 )
 
 from app.core.security import get_api_key
+from app.core.config import settings
 from app.services.template_service import TemplateService
 from app.services.token_service import TokenService
 
@@ -25,7 +27,11 @@ token_service = TokenService()
 
 router = APIRouter()
 
-async def stream_chat_completion(tokens: list[str], response: CreateChatCompletionResponse):
+async def stream_chat_completion(
+    tokens: list[str],
+    response: CreateChatCompletionResponse,
+    throughput: float
+) -> AsyncGenerator[dict, None]:
     """Stream chat completion response in chunks"""
     # First chunk with role
     first_chunk = CreateChatCompletionStreamResponse(
@@ -42,6 +48,11 @@ async def stream_chat_completion(tokens: list[str], response: CreateChatCompleti
     )
     yield {"data": json.dumps(first_chunk.model_dump())}
     
+    # Calculate delay based on throughput
+    delay = 0.0
+    if throughput > 0:
+        delay = 1.0 / throughput
+
     # Stream each token with a small delay
     for i, token in enumerate(tokens):
         chunk = CreateChatCompletionStreamResponse(
@@ -57,6 +68,10 @@ async def stream_chat_completion(tokens: list[str], response: CreateChatCompleti
             )]
         )
         yield {"data": json.dumps(chunk.model_dump())}
+
+        # Add delay to simulate token throughput
+        if delay > 0:
+            await asyncio.sleep(delay)
     
     # Final chunk with finish reason
     final_chunk = CreateChatCompletionStreamResponse(
@@ -111,7 +126,7 @@ async def create_chat_completion(
         # Return streaming response if requested
         if request.stream:
             return EventSourceResponse(
-                stream_chat_completion(tokens, response)
+                stream_chat_completion(tokens, response, throughput=settings.throughput)
             )
     
     return response

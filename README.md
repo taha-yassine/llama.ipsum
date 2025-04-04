@@ -11,6 +11,7 @@ A lightweight mock server that simulates the OpenAI API for development and test
 - [x] Supports API key authentication
 - [x] Logs requests and responses
 - [x] Supports streaming responses
+   - [x] Configurable throughput (tokens per second)
 - [ ] Handles tool calls
 
 ## Installation

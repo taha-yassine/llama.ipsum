@@ -7,6 +7,9 @@ class Settings(BaseSettings):
     port: int = os.environ.get("LLAMA_IPSUM_PORT", 8000)
     enable_logs: bool = os.environ.get("LLAMA_IPSUM_ENABLE_LOGS", False)
     
+    # Streaming settings
+    throughput: float = os.environ.get("LLAMA_IPSUM_THROUGHPUT", 100.0)
+
     # Template settings
     template_dir: str = os.environ.get("LLAMA_IPSUM_TEMPLATE_DIR", "")
 
